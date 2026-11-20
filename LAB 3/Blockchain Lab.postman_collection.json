@@ -1,0 +1,236 @@
+{
+  "info": {
+    "_postman_id": "1bb0ee1c-b659-48db-98ef-022665b78e9b",
+    "name": "Blockchain Lab",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "60306275",
+    "_collection_link": "https://go.postman.co/collection/60306275-1bb0ee1c-b659-48db-98ef-022665b78e9b?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Post mine",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Skrót bloku spełnia warunek trudności (0000)\", function () {\r\n    pm.expect(json.hash.startsWith(\"0000\")).to.be.true;\r\n});\r\n\r\npm.test(\"Pierwsza transakcja to nagroda (coinbase)\", function () {\r\n    const tx = json.block.transactions[0];\r\n    pm.expect(tx.sender).to.eql(\"0\");\r\n    pm.expect(tx.amount).to.eql(1);\r\n});\r\n\r\nconst prevHash = pm.environment.get(\"lastHash\");\r\nif (prevHash) {\r\n    pm.test(\"previous_hash zgadza się z lastHash poprzedniego bloku\", function () {\r\n        pm.expect(json.block.previous_hash).to.eql(prevHash);\r\n    });\r\n}\r\n\r\npm.environment.set(\"prevBlockHash\", json.block.previous_hash);\r\npm.environment.set(\"lastHash\", json.hash);\r\npm.environment.set(\"nodeId\", json.block.transactions[0].recipient);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/mine",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mine"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Post transactions new",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 201 Created\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\npm.test(\"Odpowiedź zawiera komunikat z numerem bloku\", function () {\r\n    pm.expect(json).to.have.property(\"message\");\r\n    pm.expect(json.message).to.include(\"Transakcja zostanie dodana do bloku\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sender\": \"{{nodeId}}\",\r\n  \"recipient\": \"Bob\",\r\n  \"amount\": 0.5\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/new",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "new"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get chain",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Długość łańcucha zgodna z polem length\", function () {\r\n    pm.expect(json.chain.length).to.eql(json.length);\r\n});\r\n\r\nconst expectedPrevHash = pm.environment.get(\"prevBlockHash\");\r\nif (expectedPrevHash && json.chain.length > 1) {\r\n    pm.test(\"Ostatni blok ma poprawny previous_hash\", function () {\r\n        const lastBlock = json.chain[json.chain.length - 1];\r\n        pm.expect(lastBlock.previous_hash).to.eql(expectedPrevHash);\r\n    });\r\n}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chain",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chain"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "New Request",
+          "originalRequest": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/chain",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "chain"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [
+            {
+              "key": "Server",
+              "value": "Werkzeug/3.1.9 Python/3.12.2"
+            },
+            {
+              "key": "Date",
+              "value": "Thu, 19 Nov 2026 10:43:31 GMT"
+            },
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Content-Length",
+              "value": "1999"
+            },
+            {
+              "key": "Connection",
+              "value": "close"
+            }
+          ],
+          "cookie": [],
+          "body": "{\n  \"chain\": [\n    {\n      \"index\": 1,\n      \"nonce\": 0,\n      \"previous_hash\": \"0000000000000000000000000000000000000000000000000000000000000000\",\n      \"timestamp\": 0,\n      \"transactions\": []\n    },\n    {\n      \"index\": 2,\n      \"nonce\": 1527,\n      \"previous_hash\": \"147aed30e21a13f96f72aab4f74ca20fc513b80e10ad6caa74db670786640172\",\n      \"timestamp\": 1795083239.080281,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        }\n      ]\n    },\n    {\n      \"index\": 3,\n      \"nonce\": 48012,\n      \"previous_hash\": \"0000f5069f607b3c02daf21301a18801051364988ff339880e0874d985c950db\",\n      \"timestamp\": 1795084737.5419369,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        }\n      ]\n    },\n    {\n      \"index\": 4,\n      \"nonce\": 23999,\n      \"previous_hash\": \"00005369e71f3546b21cfaa9507639938996a370067e5ee9e1900153dbdd0beb\",\n      \"timestamp\": 1795084739.6100142,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        }\n      ]\n    },\n    {\n      \"index\": 5,\n      \"nonce\": 58083,\n      \"previous_hash\": \"00008f4079ecb7f1274fc2b39e2344a6325a931b54576a4b6416e08c29714aa8\",\n      \"timestamp\": 1795084741.4085627,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        }\n      ]\n    },\n    {\n      \"index\": 6,\n      \"nonce\": 15618,\n      \"previous_hash\": \"0000ebcedf31e76f53c03bc32edf0eecf28036c609e4ae09b6ad95e89f39b393\",\n      \"timestamp\": 1795084936.9834895,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        }\n      ]\n    },\n    {\n      \"index\": 7,\n      \"nonce\": 20833,\n      \"previous_hash\": \"00000656afa5b870fba58766d6c7ec151256dddfc6f52b014eba7d9ce46b7d37\",\n      \"timestamp\": 1795085006.363726,\n      \"transactions\": [\n        {\n          \"amount\": 1,\n          \"recipient\": \"d57fdf2dd8d441d08c9482803ea99c51\",\n          \"sender\": \"0\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        },\n        {\n          \"amount\": 0.5,\n          \"recipient\": \"Bob\",\n          \"sender\": \"d57fdf2dd8d441d08c9482803ea99c51\"\n        }\n      ]\n    }\n  ],\n  \"length\": 7\n}"
+        }
+      ]
+    },
+    {
+      "name": "Get Pending Transactions",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zgodność liczby transakcji z polem count\", function () {\r\n    pm.expect(json.pending_transactions).to.be.an(\"array\");\r\n    pm.expect(json.pending_transactions.length).to.eql(json.count);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/transactions/pending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "pending"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Block (valid)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 200\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zwrócono blok o indeksie 1 oraz hash\", function () {\r\n    pm.expect(json.block.index).to.eql(1);\r\n    pm.expect(json).to.have.property(\"hash\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/block/1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "block",
+            "1"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Block (404)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const json = pm.response.json();\r\n\r\npm.test(\"Status 404 dla nieistniejącego bloku\", function () {\r\n    pm.response.to.have.status(404);\r\n});\r\n\r\npm.test(\"Odpowiedź zawiera komunikat błędu\", function () {\r\n    pm.expect(json).to.have.property(\"error\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/block/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "block",
+            "999"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
